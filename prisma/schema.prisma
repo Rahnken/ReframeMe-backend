@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,7 @@ model User {
   userId    String        @id @default(cuid())
   username  String
   email     String
-  createdOn DateTime
+  createdOn DateTime?     @default(now())
   lastLogin DateTime?
   goals     Goal[]
   profiles  UserProfiles?
@@ -61,7 +61,7 @@ model UserProfiles {
   Country     String?
   TimeZone    String?
   Interests   String?
-  Settings    String?
+  Settings    Json?
   user        User      @relation(fields: [userId], references: [userId])
 }
 
