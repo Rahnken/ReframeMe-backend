@@ -9,3 +9,71 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  userId    String        @id @default(cuid())
+  username  String
+  email     String
+  createdOn DateTime
+  lastLogin DateTime?
+  goals     Goal[]
+  profiles  UserProfiles?
+}
+
+model Goal {
+  id          String         @id @default(cuid())
+  title       String
+  content     String
+  user_id     String
+  isPrivate   Boolean        @default(true)
+  user        User           @relation(fields: [user_id], references: [userId])
+  goalWeeks   GoalProgress[]
+  sharedGoals SharedGoal[]
+}
+
+model GoalProgress {
+  id              String @id @default(cuid())
+  goal_id         String
+  weekNumber      Int
+  targetAmount    Int
+  completedAmount Int
+  goal            Goal   @relation(fields: [goal_id], references: [id])
+
+  @@unique([goal_id, weekNumber]) // Each goal can only have one progress entry per week
+}
+
+model SharedGoal {
+  id       String @id @default(cuid())
+  goal_id  String
+  group_id String
+  goal     Goal   @relation(fields: [goal_id], references: [id])
+  group    Group  @relation(fields: [group_id], references: [id])
+
+  @@unique([goal_id, group_id]) // A goal can be shared with a group only once
+}
+
+model UserProfiles {
+  ProfileId   String    @id @default(cuid())
+  userId      String    @unique
+  FirstName   String?
+  LastName    String?
+  DateOfBirth DateTime?
+  Country     String?
+  TimeZone    String?
+  Interests   String?
+  Settings    String?
+  user        User      @relation(fields: [userId], references: [userId])
+}
+
+model Group_Users {
+  id       String @id @default(cuid())
+  group_id String
+  group    Group  @relation(fields: [group_id], references: [id])
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  users       Group_Users[]
+  sharedGoals SharedGoal[]
+}
