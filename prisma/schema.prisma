@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -11,7 +12,7 @@ datasource db {
 }
 
 model User {
-  userId         String        @id @default(cuid())
+  user_id        String        @id @default(cuid())
   username       String
   email          String
   hashedPassword String
@@ -24,21 +25,22 @@ model User {
 model Goal {
   id          String         @id @default(cuid())
   title       String
-  content     String
+  description String
   user_id     String
   isPrivate   Boolean        @default(true)
-  user        User           @relation(fields: [user_id], references: [userId])
+  user        User           @relation(fields: [user_id], references: [user_id])
   goalWeeks   GoalProgress[]
   sharedGoals SharedGoal[]
 }
 
 model GoalProgress {
-  id              String @id @default(cuid())
+  id              String  @id @default(cuid())
   goal_id         String
+  feedback        String?
   weekNumber      Int
   targetAmount    Int
-  completedAmount Int
-  goal            Goal   @relation(fields: [goal_id], references: [id])
+  completedAmount Int?
+  goal            Goal    @relation(fields: [goal_id], references: [id])
 
   @@unique([goal_id, weekNumber]) // Each goal can only have one progress entry per week
 }
@@ -62,7 +64,7 @@ model UserProfiles {
   country        String?
   timezone       String?
   userSetting_id String       @unique
-  user           User         @relation(fields: [user_id], references: [userId])
+  user           User         @relation(fields: [user_id], references: [user_id])
   userSettings   UserSettings @relation(fields: [userSetting_id], references: [userSetting_id])
 
   @@unique([user_id, userSetting_id])

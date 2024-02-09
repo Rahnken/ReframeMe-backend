@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "clear": "ts-node prisma/clearDB.ts"
   },
   "author": "Eric Donnelly",
   "license": "ISC",

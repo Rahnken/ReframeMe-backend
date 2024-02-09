@@ -1,10 +1,8 @@
 import { z } from "zod";
 import { prisma } from "./db.setup";
 import bcrypt from "bcrypt";
-const clearDB = async () => {
-  await prisma.goal.deleteMany();
-  await prisma.user.deleteMany();
-};
+import { clearDB } from "./clearDB";
+import { createWeeklyGoalsArray } from "../src/utils/createWeeklyGoal";
 
 const seedDB = async () => {
   console.log("Starting to seed DB...");
@@ -39,12 +37,44 @@ const seedDB = async () => {
       dateOfBirth: new Date("1993-12-30").toISOString(),
       country: "Canada",
       timezone: "GMT-5",
-      user_id: eric.userId,
+      user_id: eric.user_id,
       userSetting_id: ericUserSettings.userSetting_id,
     },
   });
-};
 
+  const goalOneWeekly = createWeeklyGoalsArray(12, 1);
+
+  const ericGoalOne = await prisma.goal.create({
+    data: {
+      title: "Lose 12 Pounds",
+      description: "Lose an average of 1 pound each week",
+      isPrivate: true,
+      user_id: eric.user_id,
+      goalWeeks: {
+        createMany: {
+          data: [...goalOneWeekly],
+        },
+      },
+    },
+    include: {
+      goalWeeks: true,
+    },
+  });
+  const goalTwoWeekly = createWeeklyGoalsArray(12, 15 * 7);
+  const ericGoalTwo = await prisma.goal.create({
+    data: {
+      title: "Do 15 Pushups each day",
+      description: "Generate Muscle by doing 15 pushups every day",
+      isPrivate: true,
+      user_id: eric.user_id,
+      goalWeeks: {
+        createMany: {
+          data: [...goalTwoWeekly],
+        },
+      },
+    },
+  });
+};
 seedDB()
   .then(() => {
     console.log("Seeding complete");
