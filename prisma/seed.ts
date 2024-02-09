@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { prisma } from "./db.setup";
-import bcrypt from "bcrypt";
+
 import { clearDB } from "./clearDB";
 import { createWeeklyGoalsArray } from "../src/utils/createWeeklyGoal";
+import { encryptPassword } from "../src/utils/auth-utils";
 
 const seedDB = async () => {
   console.log("Starting to seed DB...");
@@ -13,7 +14,7 @@ const seedDB = async () => {
     data: {
       username: "EDonn1",
       email: "eric@eric.com",
-      hashedPassword: await bcrypt.hash("p@$$word!?", 12).then((hash) => hash),
+      hashedPassword: await encryptPassword("p@$$word!?"),
     },
   });
   // Create jon
@@ -21,7 +22,7 @@ const seedDB = async () => {
     data: {
       username: "JHiggz",
       email: "jon@jon.com",
-      hashedPassword: await bcrypt.hash("p@$$w0rd2", 12).then((hash) => hash),
+      hashedPassword: await encryptPassword("p@$$w0rd2"),
     },
   });
   const ericUserSettings = await prisma.userSettings.create({
