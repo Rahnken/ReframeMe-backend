@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma } from "./db.setup";
-
+import bcrypt from "bcrypt";
 const clearDB = async () => {
   await prisma.goal.deleteMany();
   await prisma.user.deleteMany();
@@ -15,6 +15,7 @@ const seedDB = async () => {
     data: {
       username: "EDonn1",
       email: "eric@eric.com",
+      hashedPassword: await bcrypt.hash("p@$$word!?", 12).then((hash) => hash),
     },
   });
   // Create jon
@@ -22,20 +23,24 @@ const seedDB = async () => {
     data: {
       username: "JHiggz",
       email: "jon@jon.com",
+      hashedPassword: await bcrypt.hash("p@$$w0rd2", 12).then((hash) => hash),
     },
   });
+  const ericUserSettings = await prisma.userSettings.create({
+    data: {
+      theme: "dark",
+    },
+  });
+
   const ericProfile = await prisma.userProfiles.create({
     data: {
-      FirstName: "Eric",
-      LastName: "Donnelly",
-      DateOfBirth: new Date("1993-12-30").toISOString(),
-      Country: "Canada",
-      TimeZone: "GMT-5",
-      userId: eric.userId,
-      Settings: {
-        theme: "dark",
-        hasProfile: true,
-      },
+      firstName: "Eric",
+      lastName: "Donnelly",
+      dateOfBirth: new Date("1993-12-30").toISOString(),
+      country: "Canada",
+      timezone: "GMT-5",
+      user_id: eric.userId,
+      userSetting_id: ericUserSettings.userSetting_id,
     },
   });
 };

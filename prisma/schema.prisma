@@ -11,13 +11,14 @@ datasource db {
 }
 
 model User {
-  userId    String        @id @default(cuid())
-  username  String
-  email     String
-  createdOn DateTime?     @default(now())
-  lastLogin DateTime?
-  goals     Goal[]
-  profiles  UserProfiles?
+  userId         String        @id @default(cuid())
+  username       String
+  email          String
+  hashedPassword String
+  createdOn      DateTime?     @default(now())
+  lastLogin      DateTime?
+  goals          Goal[]
+  profiles       UserProfiles?
 }
 
 model Goal {
@@ -53,16 +54,25 @@ model SharedGoal {
 }
 
 model UserProfiles {
-  ProfileId   String    @id @default(cuid())
-  userId      String    @unique
-  FirstName   String?
-  LastName    String?
-  DateOfBirth DateTime?
-  Country     String?
-  TimeZone    String?
-  Interests   String?
-  Settings    Json?
-  user        User      @relation(fields: [userId], references: [userId])
+  profile_id     String       @id @default(cuid())
+  user_id        String       @unique
+  firstName      String?
+  lastName       String?
+  dateOfBirth    DateTime?
+  country        String?
+  timezone       String?
+  userSetting_id String       @unique
+  user           User         @relation(fields: [user_id], references: [userId])
+  userSettings   UserSettings @relation(fields: [userSetting_id], references: [userSetting_id])
+
+  @@unique([user_id, userSetting_id])
+}
+
+model UserSettings {
+  userSetting_id  String        @id @default(cuid())
+  theme           String?
+  profileComplete Boolean       @default(false)
+  userProfile     UserProfiles?
 }
 
 model Group_Users {
