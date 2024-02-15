@@ -14,7 +14,7 @@ const seedDB = async () => {
     data: {
       username: "EDonn1",
       email: "eric@eric.com",
-      hashedPassword: await encryptPassword("p@$$word!?"),
+      hashedPassword: await encryptPassword("P4$$word!?"),
     },
   });
   // Create jon
@@ -22,7 +22,7 @@ const seedDB = async () => {
     data: {
       username: "JHiggz",
       email: "jon@jon.com",
-      hashedPassword: await encryptPassword("p@$$w0rd2"),
+      hashedPassword: await encryptPassword("P@$$w0rd2"),
     },
   });
   const ericUserSettings = await prisma.userSettings.create({

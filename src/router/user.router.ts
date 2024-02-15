@@ -3,7 +3,11 @@ import { validateRequest } from "zod-express-middleware";
 import { prisma } from "../../prisma/db.setup";
 import { z } from "zod";
 import bcrypt from "bcrypt";
-import { encryptPassword } from "../utils/auth-utils";
+import {
+  encryptPassword,
+  createUserJwtToken,
+  createTokenUserInfo,
+} from "../utils/auth-utils";
 
 const userRouter = Router();
 
@@ -34,11 +38,20 @@ userRouter.post(
       user.hashedPassword
     );
     if (!isPasswordCorrect)
-      res
+      return res
         .status(401)
         .send({ message: "Invalid Credentials, please try again" });
-
-    return res.status(200).send(user);
+    await prisma.user.update({
+      data: {
+        lastLogin: new Date().toISOString(),
+      },
+      where: {
+        user_id: user.user_id,
+      },
+    });
+    const userInfo = createTokenUserInfo(user);
+    const token = createUserJwtToken(user);
+    return res.status(200).send({ token, userInfo });
   }
 );
 
