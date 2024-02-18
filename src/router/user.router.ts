@@ -77,7 +77,7 @@ userRouter.post(
     });
     if (!user)
       return res
-        .send(400)
+        .status(400)
         .send({ message: "Something went wrong ... User was not Created " });
 
     return res.status(201).send(user);
@@ -85,5 +85,3 @@ userRouter.post(
 );
 
 export { userRouter };
-
-//

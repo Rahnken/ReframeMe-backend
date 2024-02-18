@@ -27,7 +27,7 @@ export const createTokenUserInfo = (user: User) => {
 const jwtInfoSchema = z.object({
   email: z.string().email(),
   username: z.string(),
-  lastLogin: z.date(),
+  lastLogin: z.string().datetime(),
   iat: z.number(),
 });
 
