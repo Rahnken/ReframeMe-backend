@@ -16,7 +16,7 @@ goalRouter.get("/", authenticationMiddleware, async (req, res) => {
       goalWeeks: true,
     },
   });
-  res.status(200).send(goals);
+  return res.status(200).send(goals);
 });
 
 goalRouter.post(
