@@ -7,6 +7,7 @@ import {
   encryptPassword,
   createUserJwtToken,
   createTokenUserInfo,
+  authenticationMiddleware,
 } from "../utils/auth-utils";
 
 const userRouter = Router();
@@ -83,5 +84,17 @@ userRouter.post(
     return res.status(201).send(user);
   }
 );
+userRouter.get("/userInfo", authenticationMiddleware, async (req, res) => {
+  const user = await prisma.userProfiles.findFirst({
+    where: {
+      user_id: req.user?.user_id,
+    },
+    include: {
+      userSettings: true,
+    },
+  });
+  if (!user) return res.status(400).send({ message: "User not found " });
+  return res.status(200).send(user);
+});
 
 export { userRouter };

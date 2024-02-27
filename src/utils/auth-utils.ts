@@ -9,7 +9,6 @@ import type {} from "../app";
 import dotenv from "dotenv";
 dotenv.config();
 
-const jwtSecret = process.env.JWT_SECRET;
 const saltRounds = 12;
 
 export const encryptPassword = (password: string) => {
@@ -53,6 +52,7 @@ export const authenticationMiddleware = async (
   const [, token] = req.headers.authorization?.split?.(" ") || [];
   const userJWTData = getDataFromAuthToken(token);
   if (!userJWTData) return res.status(401).send({ message: "Invalid token" });
+
   const user = await prisma.user.findFirst({
     where: {
       username: userJWTData.username,

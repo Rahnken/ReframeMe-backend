@@ -20,13 +20,12 @@ goalRouter.get("/", authenticationMiddleware, async (req, res) => {
 });
 
 goalRouter.post(
-  "/",
+  "/create",
   authenticationMiddleware,
   validateRequest({
     body: z.object({
       title: z.string(),
       description: z.string(),
-      user_id: z.string(),
       isPrivate: z.boolean(),
       weeklyTrackingTotal: z.number(),
     }),
@@ -73,7 +72,6 @@ goalRouter.get("/:goal_id", authenticationMiddleware, async (req, res) => {
     return res
       .status(400)
       .send({ message: "Could not find goal matching that id" });
-
   return res.status(200).send(goal);
 });
 
