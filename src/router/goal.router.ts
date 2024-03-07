@@ -75,21 +75,43 @@ goalRouter.get("/:goal_id", authenticationMiddleware, async (req, res) => {
   return res.status(200).send(goal);
 });
 
-goalRouter.patch("/:goal_id", authenticationMiddleware, async (req, res) => {
-  const { goal_id } = req.params;
-  const updatedGoal = await prisma.goal.update({
-    data: {
-      ...req.body,
-    },
-    where: {
-      id: goal_id,
-      user_id: req.user!.user_id,
-    },
-  });
+goalRouter.patch(
+  "/:goal_id/edit",
+  authenticationMiddleware,
+  async (req, res) => {
+    const { id, title, description, isPrivate, weeklyTrackingTotal } = req.body;
 
-  if (!updatedGoal)
-    return res.status(400).send({ message: "Could not update that goal" });
-});
+    const updatedGoal = await prisma.goal.update({
+      data: {
+        title: title,
+        description: description,
+        user_id: req.user!.user_id,
+        isPrivate: isPrivate,
+        goalWeeks: {
+          updateMany: {
+            data: {
+              targetAmount: weeklyTrackingTotal,
+            },
+            where: {
+              goal_id: id,
+            },
+          },
+        },
+      },
+      where: {
+        id: id,
+        user_id: req.user!.user_id,
+      },
+      include: {
+        goalWeeks: true,
+      },
+    });
+
+    if (!updatedGoal)
+      return res.status(400).send({ message: "Could not update that goal" });
+    return res.status(200).send(updatedGoal);
+  }
+);
 
 goalRouter.get(
   "/:goal_id/:weekNumber",

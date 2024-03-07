@@ -20,6 +20,7 @@ model User {
   lastLogin      DateTime?
   goals          Goal[]
   profiles       UserProfiles?
+  groups         Group_Users[]  
 }
 
 model Goal {
@@ -80,7 +81,11 @@ model UserSettings {
 model Group_Users {
   id       String @id @default(cuid())
   group_id String
+  user_id  String
   group    Group  @relation(fields: [group_id], references: [id])
+  user     User   @relation(fields: [user_id], references: [user_id])
+
+  @@unique([group_id, user_id]) // Ensure each user is only added once per group
 }
 
 model Group {
