@@ -5,6 +5,7 @@ import { userRouter } from "./router/user.router";
 import { goalRouter } from "./router/goal.router";
 import cors from "cors";
 import { User } from "@prisma/client";
+import { groupRouter } from "./router/group.router";
 
 const app = express();
 declare global {
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 
 app.use("/user", userRouter);
 app.use("/goals", goalRouter);
+app.use("/groups", groupRouter);
 
 app.listen(port, () => {
   console.log(`Listening on localhost://${port} `);
