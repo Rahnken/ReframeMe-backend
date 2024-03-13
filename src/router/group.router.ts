@@ -60,7 +60,11 @@ groupRouter.get("/:groupId/", authenticationMiddleware, async (req, res) => {
   const group = await prisma.group.findFirst({
     where: { id: groupId },
     include: {
-      users: true,
+      users: {
+        include: {
+          user: true,
+        },
+      },
       sharedGoals: true,
     },
   });

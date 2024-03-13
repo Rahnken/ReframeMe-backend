@@ -74,6 +74,20 @@ userRouter.post(
         username: username,
         email: email,
         hashedPassword: await encryptPassword(password),
+        profiles: {
+          create: {
+            userSettings: {
+              create: {},
+            },
+          },
+        },
+      },
+      include: {
+        profiles: {
+          include: {
+            userSettings: true,
+          },
+        },
       },
     });
     if (!user)

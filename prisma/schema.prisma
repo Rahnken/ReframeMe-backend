@@ -19,7 +19,7 @@ enum Role {
 model User {
   user_id        String        @id @default(cuid())
   username       String        @unique
-  email          String         @unique
+  email          String        @unique
   hashedPassword String
   createdOn      DateTime?     @default(now())
   lastLogin      DateTime?

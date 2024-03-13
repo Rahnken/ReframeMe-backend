@@ -14,8 +14,10 @@ goalRouter.get("/", authenticationMiddleware, async (req, res) => {
     },
     include: {
       goalWeeks: true,
+      sharedGoals: true,
     },
   });
+
   return res.status(200).send(goals);
 });
 
@@ -66,6 +68,7 @@ goalRouter.get("/:goal_id", authenticationMiddleware, async (req, res) => {
     },
     include: {
       goalWeeks: true,
+      sharedGoals: true,
     },
   });
   if (!goal)
@@ -79,37 +82,69 @@ goalRouter.patch(
   "/:goal_id/edit",
   authenticationMiddleware,
   async (req, res) => {
-    const { id, title, description, isPrivate, weeklyTrackingTotal } = req.body;
+    const {
+      id,
+      title,
+      description,
+      isPrivate,
+      weeklyTrackingTotal,
+      sharedGroups, // Assume this is an array of group IDs to share with
+    } = req.body;
 
-    const updatedGoal = await prisma.goal.update({
-      data: {
-        title: title,
-        description: description,
-        user_id: req.user!.user_id,
-        isPrivate: isPrivate,
-        goalWeeks: {
-          updateMany: {
-            data: {
-              targetAmount: weeklyTrackingTotal,
-            },
-            where: {
-              goal_id: id,
+    // Fetch current shared groups for the goal
+    const currentShared = await prisma.sharedGoal.findMany({
+      where: { goal_id: id },
+      select: { group_id: true },
+    });
+    const currentGroupIds = currentShared.map((sg) => sg.group_id);
+
+    // Determine which groups to connect and disconnect
+    const newGroupIds: string[] = sharedGroups.map((sg: string) => sg);
+    const groupsToConnect = newGroupIds.filter(
+      (id: string) => !currentGroupIds.includes(id)
+    );
+    const groupsToDisconnect = currentGroupIds.filter(
+      (id) => !newGroupIds.includes(id)
+    );
+    // Delete shared goals that are not in the new groups
+    for (const groupId of groupsToDisconnect) {
+      await prisma.sharedGoal.deleteMany({
+        where: { goal_id: id, group_id: groupId },
+      });
+    }
+
+    // Connect to new groups
+    for (const groupId of groupsToConnect) {
+      await prisma.sharedGoal.create({
+        data: { goal_id: id, group_id: groupId },
+      });
+    }
+
+    try {
+      const updatedGoal = await prisma.goal.update({
+        where: { id },
+        data: {
+          title,
+          description,
+          isPrivate,
+          goalWeeks: {
+            updateMany: {
+              where: { goal_id: id },
+              data: { targetAmount: weeklyTrackingTotal },
             },
           },
         },
-      },
-      where: {
-        id: id,
-        user_id: req.user!.user_id,
-      },
-      include: {
-        goalWeeks: true,
-      },
-    });
+        include: {
+          goalWeeks: true,
+          sharedGoals: true,
+        },
+      });
 
-    if (!updatedGoal)
+      return res.status(200).send(updatedGoal);
+    } catch (error) {
+      console.error("Failed to update goal with shared groups", error);
       return res.status(400).send({ message: "Could not update that goal" });
-    return res.status(200).send(updatedGoal);
+    }
   }
 );
 
