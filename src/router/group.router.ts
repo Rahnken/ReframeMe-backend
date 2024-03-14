@@ -65,13 +65,22 @@ groupRouter.get("/:groupId/", authenticationMiddleware, async (req, res) => {
           user: true,
         },
       },
-      sharedGoals: true,
+      sharedGoals: {
+        include: {
+          goal: {
+            include: {
+              goalWeeks: true,
+            },
+          },
+        },
+      },
     },
   });
   if (!group)
     return res
       .status(400)
       .send({ message: "Could not find group matching that id" });
+  console.log(group);
   return res.status(200).send(group);
 });
 
@@ -82,7 +91,7 @@ groupRouter.post(
     body: z.object({
       users: z.array(
         z.object({
-          user_id: z.string(),
+          user_email: z.string().email(),
           role: z.nativeEnum(Role),
         })
       ),
@@ -91,12 +100,28 @@ groupRouter.post(
   async (req, res) => {
     const { groupId } = req.params;
     const { users } = req.body;
-
+    const userIds = await Promise.all(
+      users.map(async (user) => {
+        const existingUser = await prisma.user.findFirst({
+          where: { email: user.user_email },
+          select: { user_id: true },
+        });
+        return existingUser?.user_id;
+      })
+    );
+    const validUserIds = userIds.filter((id) => id !== undefined);
+    const userRecords = validUserIds.map((userId) => ({
+      user_id: userId!,
+      role: Role.MEMBER,
+    }));
     const updatedGroup = await prisma.group.update({
       where: { id: groupId },
       data: {
         users: {
-          create: users,
+          create: userRecords.map((user) => ({
+            user_id: user.user_id,
+            role: user.role,
+          })),
         },
       },
       include: {
