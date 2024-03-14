@@ -110,5 +110,29 @@ userRouter.get("/userInfo", authenticationMiddleware, async (req, res) => {
   if (!user) return res.status(400).send({ message: "User not found " });
   return res.status(200).send(user);
 });
+userRouter.patch("/userInfo", authenticationMiddleware, async (req, res) => {
+  const { user_id } = req.user!;
+  const { firstName, lastName, country, timezone, userSettings } = req.body;
+  const updatedUser = await prisma.userProfiles.update({
+    data: {
+      firstName,
+      lastName,
+      country,
+      timezone,
+      userSettings: {
+        update: userSettings,
+      },
+    },
+    where: {
+      user_id,
+    },
+    include: {
+      userSettings: true,
+    },
+  });
+  if (!updatedUser)
+    return res.status(400).send({ message: "User not found or not updated" });
+  return res.status(200).send(updatedUser);
+});
 
 export { userRouter };
