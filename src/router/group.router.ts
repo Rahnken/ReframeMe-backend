@@ -80,7 +80,6 @@ groupRouter.get("/:groupId/", authenticationMiddleware, async (req, res) => {
     return res
       .status(400)
       .send({ message: "Could not find group matching that id" });
-  console.log(group);
   return res.status(200).send(group);
 });
 

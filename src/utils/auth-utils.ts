@@ -15,11 +15,12 @@ export const encryptPassword = (password: string) => {
   return bcrypt.hash(password, saltRounds);
 };
 
-export const createTokenUserInfo = (user: User) => {
+export const createTokenUserInfo = (user: any) => {
   return {
     email: user.email,
     username: user.username,
     lastLogin: user.lastLogin,
+    theme: user.profiles.userSettings.theme,
   };
 };
 
