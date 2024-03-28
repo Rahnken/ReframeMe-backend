@@ -78,7 +78,7 @@ model UserProfiles {
 
 model UserSettings {
   userSetting_id  String        @id @default(cuid())
-  theme           String?
+  theme           String?       @default("reframeDark")
   profileComplete Boolean       @default(false)
   userProfile     UserProfiles?
 }
