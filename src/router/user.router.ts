@@ -139,7 +139,6 @@ userRouter.patch("/userInfo", authenticationMiddleware, async (req, res) => {
   });
   if (!updatedUser)
     return res.status(400).send({ message: "User not found or not updated" });
-  console.log(updatedUser);
   return res.status(200).send(updatedUser);
 });
 
