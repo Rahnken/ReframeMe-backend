@@ -25,23 +25,6 @@ const seedDB = async () => {
       hashedPassword: await encryptPassword("P@$$w0rd2"),
     },
   });
-  const ericUserSettings = await prisma.userSettings.create({
-    data: {
-      theme: "dark",
-    },
-  });
-
-  const ericProfile = await prisma.userProfiles.create({
-    data: {
-      firstName: "Eric",
-      lastName: "Donnelly",
-      dateOfBirth: new Date("1993-12-30").toISOString(),
-      country: "Canada",
-      timezone: "GMT-5",
-      user_id: eric.user_id,
-      userSetting_id: ericUserSettings.userSetting_id,
-    },
-  });
 
   const goalOneWeekly = createWeeklyGoalsArray(12, 1);
 
@@ -61,7 +44,7 @@ const seedDB = async () => {
       goalWeeks: true,
     },
   });
-  const goalTwoWeekly = createWeeklyGoalsArray(12, 15 * 7);
+  const goalTwoWeekly = createWeeklyGoalsArray(15 * 7);
   const ericGoalTwo = await prisma.goal.create({
     data: {
       title: "Do 15 Pushups each day",
