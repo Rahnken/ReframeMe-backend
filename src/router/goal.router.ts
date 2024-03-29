@@ -34,7 +34,7 @@ goalRouter.post(
   }),
   async (req, res) => {
     const { title, description, isPrivate, weeklyTrackingTotal } = req.body;
-    const weeklyGoalProgress = createWeeklyGoalsArray(12, weeklyTrackingTotal);
+    const weeklyGoalProgress = createWeeklyGoalsArray(weeklyTrackingTotal);
     const newGoal = await prisma.goal.create({
       data: {
         title: title,
@@ -191,4 +191,32 @@ goalRouter.patch(
     return res.status(201).send(updateWeek);
   }
 );
+
+goalRouter.delete(
+  "/:goal_id/delete",
+  authenticationMiddleware,
+  async (req, res) => {
+    const { goal_id } = req.params;
+
+    try {
+      await prisma.$transaction([
+        prisma.goalProgress.deleteMany({
+          where: {
+            goal_id: goal_id,
+          },
+        }),
+        prisma.goal.delete({
+          where: {
+            id: goal_id,
+          },
+        }),
+      ]);
+      return res.status(200).send({ message: "Goal deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete goal", error);
+      return res.status(400).send({ message: "Could not delete that goal" });
+    }
+  }
+);
+
 export { goalRouter };

@@ -183,4 +183,27 @@ groupRouter.delete(
   }
 );
 
+groupRouter.delete("/:groupId", authenticationMiddleware, async (req, res) => {
+  const { groupId } = req.params;
+
+  try {
+    await prisma.$transaction([
+      prisma.group_Users.deleteMany({
+        where: {
+          group_id: groupId,
+        },
+      }),
+      prisma.group.delete({
+        where: {
+          id: groupId,
+        },
+      }),
+    ]);
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to delete group." });
+  }
+
+  return res.status(200).json({ message: "Group deleted successfully." });
+});
+
 export { groupRouter };

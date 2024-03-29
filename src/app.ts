@@ -29,7 +29,9 @@ app.use("/goals", goalRouter);
 app.use("/groups", groupRouter);
 
 app.listen(port, () => {
-  console.log(`Listening on localhost://${port} `);
+  if (process.env.NODE_ENV === "development") {
+    console.log(`Listening on localhost://${port} `);
+  }
 });
 
 function normalizePort(val: string): string | number | false {
