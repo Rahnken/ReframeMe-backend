@@ -200,6 +200,11 @@ goalRouter.delete(
 
     try {
       await prisma.$transaction([
+        prisma.sharedGoal.deleteMany({
+          where: {
+            goal_id: goal_id,
+          },
+        }),
         prisma.goalProgress.deleteMany({
           where: {
             goal_id: goal_id,
