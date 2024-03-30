@@ -143,24 +143,36 @@ groupRouter.patch(
   async (req, res) => {
     const { groupId, userId } = req.params;
     const { role } = req.body;
+    console.log(userId);
 
-    const updatedMembership = await prisma.group_Users.updateMany({
+    const memberToUpdate = await prisma.group_Users.findFirst({
+      select: { id: true, role: true, user_id: true, group_id: true },
       where: {
-        group_id: groupId,
-        user_id: userId,
+        id: userId,
+      },
+    });
+    console.log(memberToUpdate);
+    if (!memberToUpdate)
+      return res
+        .status(404)
+        .send({ message: "User not found in group or group not found." });
+
+    const updatedMembership = await prisma.group_Users.update({
+      where: {
+        id: memberToUpdate?.id,
       },
       data: {
         role,
       },
     });
+    console.log(updatedMembership);
 
-    if (updatedMembership.count === 0) {
+    if (!updatedMembership)
       return res
         .status(404)
-        .send("User not found in group or group not found.");
-    }
+        .send({ message: "User not updated. Please try again." });
 
-    return res.status(200).json({ message: "Role updated successfully." });
+    return res.status(200).send({ message: "Role updated successfully." });
   }
 );
 
@@ -169,13 +181,47 @@ groupRouter.delete(
   authenticationMiddleware,
   async (req, res) => {
     const { groupId, userId } = req.params;
+    try {
+      const user = await prisma.group_Users.findFirst({
+        select: { user_id: true },
+        where: {
+          id: userId,
+        },
+      });
+      if (!user) {
+        return res.status(404).json({ message: "User not found in group." });
+      }
+      const goals = await prisma.sharedGoal.findMany({
+        where: {
+          goal: {
+            user_id: user.user_id,
+          },
+          group_id: groupId,
+        },
+        include: {
+          goal: true,
+        },
+      });
+      await prisma.sharedGoal.deleteMany({
+        where: {
+          goal: {
+            user_id: user.user_id,
+          },
+          group_id: groupId,
+        },
+      });
 
-    await prisma.group_Users.deleteMany({
-      where: {
-        group_id: groupId,
-        user_id: userId,
-      },
-    });
+      await prisma.group_Users.deleteMany({
+        where: {
+          group_id: groupId,
+          id: userId,
+        },
+      });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Failed to remove user from group." });
+    }
 
     return res
       .status(200)
@@ -189,6 +235,11 @@ groupRouter.delete("/:groupId", authenticationMiddleware, async (req, res) => {
   try {
     await prisma.$transaction([
       prisma.group_Users.deleteMany({
+        where: {
+          group_id: groupId,
+        },
+      }),
+      prisma.sharedGoal.deleteMany({
         where: {
           group_id: groupId,
         },
