@@ -30,6 +30,7 @@ goalRouter.post(
       description: z.string(),
       isPrivate: z.boolean(),
       weeklyTrackingTotal: z.number(),
+      sharedToGroup: z.array(z.string()).optional(),
     }),
   }),
   async (req, res) => {
@@ -51,6 +52,15 @@ goalRouter.post(
         goalWeeks: true,
       },
     });
+    const sharedGroups = req.body.sharedToGroup;
+    console.log(sharedGroups);
+    if (sharedGroups) {
+      for (const groupId of sharedGroups) {
+        await prisma.sharedGoal.create({
+          data: { goal_id: newGoal.id, group_id: groupId },
+        });
+      }
+    }
 
     if (!newGoal)
       return res
