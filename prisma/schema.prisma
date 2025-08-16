@@ -17,15 +17,17 @@ enum Role {
 }
 
 model User {
-  user_id        String        @id @default(cuid())
-  username       String        @unique
-  email          String        @unique
-  hashedPassword String
-  createdOn      DateTime?     @default(now())
-  lastLogin      DateTime?
-  goals          Goal[]
-  profiles       UserProfiles?
-  groups         Group_Users[]
+  user_id             String               @id @default(cuid())
+  username            String               @unique
+  email               String               @unique
+  hashedPassword      String
+  createdOn           DateTime?            @default(now())
+  lastLogin           DateTime?
+  goals               Goal[]
+  profiles            UserProfiles?
+  groups              Group_Users[]
+  passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
 }
 
 model Goal {
@@ -117,4 +119,39 @@ model Group {
   description String
   users       Group_Users[]
   sharedGoals SharedGoal[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user_id   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([user_id])
+}
+
+enum NotificationType {
+  GROUP_INVITATION
+  GROUP_REMOVAL
+  GOAL_SHARED
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  user_id   String
+  type      NotificationType
+  title     String
+  message   String
+  data      String?          // JSON string for additional data
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([read])
 }

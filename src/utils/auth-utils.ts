@@ -19,15 +19,15 @@ export const createTokenUserInfo = (user: any) => {
   return {
     email: user.email,
     username: user.username,
-    lastLogin: user.lastLogin,
-    theme: user.profiles.userSettings.theme,
+    lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
+    theme: user.profiles?.userSettings?.theme || "modernDark",
   };
 };
 
 const jwtInfoSchema = z.object({
   email: z.string().email(),
   username: z.string(),
-  lastLogin: z.string().datetime(),
+  lastLogin: z.string().datetime().nullable(),
   iat: z.number(),
 });
 

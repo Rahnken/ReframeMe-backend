@@ -3,6 +3,7 @@ import express from "express";
 import "express-async-errors";
 import { userRouter } from "./router/user.router";
 import { goalRouter } from "./router/goal.router";
+import { authRouter } from "./router/auth.router";
 import cors from "cors";
 import { User } from "@prisma/client";
 import { groupRouter } from "./router/group.router";
@@ -28,6 +29,7 @@ app.get("/", (req, res) => {
 app.use("/user", userRouter);
 app.use("/goals", goalRouter);
 app.use("/groups", groupRouter);
+app.use("/auth", authRouter);
 
 app.listen(port, () => {
   if (process.env.NODE_ENV === "development") {

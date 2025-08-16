@@ -90,7 +90,7 @@ groupRouter.post(
     body: z.object({
       users: z.array(
         z.object({
-          user_email: z.string().email(),
+          user_identifier: z.string(),
           role: z.nativeEnum(Role),
         })
       ),
@@ -101,18 +101,31 @@ groupRouter.post(
     const { users } = req.body;
     const userIds = await Promise.all(
       users.map(async (user) => {
+        // Try to find user by email first, then by username
         const existingUser = await prisma.user.findFirst({
-          where: { email: user.user_email },
+          where: {
+            OR: [
+              { email: user.user_identifier },
+              { username: user.user_identifier },
+            ],
+          },
           select: { user_id: true },
         });
         return existingUser?.user_id;
       })
     );
     const validUserIds = userIds.filter((id) => id !== undefined);
-    const userRecords = validUserIds.map((userId) => ({
+    const userRecords = validUserIds.map((userId, index) => ({
       user_id: userId!,
-      role: Role.MEMBER,
+      role: users[index].role, // Use the role from the request instead of hardcoded MEMBER
     }));
+
+    // Get group information for notification
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true },
+    });
+
     const updatedGroup = await prisma.group.update({
       where: { id: groupId },
       data: {
@@ -127,6 +140,25 @@ groupRouter.post(
         users: true,
       },
     });
+
+    // Send notifications to invited users
+    if (group && validUserIds.length > 0) {
+      const notifications = validUserIds.map((userId) => ({
+        user_id: userId!,
+        type: 'GROUP_INVITATION' as const,
+        title: 'Group Invitation',
+        message: `You have been invited to join the group "${group.name}"`,
+        data: JSON.stringify({
+          groupId: groupId,
+          groupName: group.name,
+          invitedBy: req.user!.username,
+        }),
+      }));
+
+      await prisma.notification.createMany({
+        data: notifications,
+      });
+    }
 
     return res.status(200).json(updatedGroup);
   }
@@ -190,6 +222,34 @@ groupRouter.delete(
       });
       if (!user) {
         return res.status(404).json({ message: "User not found in group." });
+      }
+
+      // Get user and group information for notification
+      const userToRemove = await prisma.user.findUnique({
+        where: { user_id: user.user_id },
+        select: { username: true }
+      });
+
+      const group = await prisma.group.findUnique({
+        where: { id: groupId },
+        select: { name: true }
+      });
+
+      if (userToRemove && group) {
+        // Create removal notification for the removed user
+        await prisma.notification.create({
+          data: {
+            user_id: user.user_id,
+            type: 'GROUP_REMOVAL',
+            title: 'Removed from Group',
+            message: `You have been removed from the group "${group.name}"`,
+            data: JSON.stringify({
+              groupId: groupId,
+              groupName: group.name,
+              removedBy: req.user!.username,
+            }),
+          }
+        });
       }
       const goals = await prisma.sharedGoal.findMany({
         where: {

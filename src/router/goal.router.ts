@@ -32,6 +32,48 @@ function calculateDaysRemaining(endDate: Date): number {
   return Math.max(0, daysDiff);
 }
 
+// Helper function for goal sharing notifications
+async function createGoalSharingNotifications(goalId: string, goalTitle: string, newGroupIds: string[], sharedBy: string) {
+  for (const groupId of newGroupIds) {
+    // Get all group members
+    const groupMembers = await prisma.group_Users.findMany({
+      where: { group_id: groupId },
+      include: {
+        user: { select: { user_id: true, username: true } }
+      }
+    });
+
+    // Get group info
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true }
+    });
+
+    if (group) {
+      // Create notifications for all group members except the person sharing
+      const notifications = groupMembers
+        .filter(member => member.user.username !== sharedBy)
+        .map(member => ({
+          user_id: member.user.user_id,
+          type: 'GOAL_SHARED' as const,
+          title: 'New Goal Shared',
+          message: `${sharedBy} shared the goal "${goalTitle}" with your group "${group.name}"`,
+          data: JSON.stringify({
+            groupId: groupId,
+            groupName: group.name,
+            goalId: goalId,
+            goalTitle: goalTitle,
+            sharedBy: sharedBy,
+          }),
+        }));
+
+      if (notifications.length > 0) {
+        await prisma.notification.createMany({ data: notifications });
+      }
+    }
+  }
+}
+
 // url../goals
 goalRouter.get("/", authenticationMiddleware, async (req, res) => {
   const goals = await prisma.goal.findMany({
@@ -110,12 +152,20 @@ goalRouter.post(
     });
     const sharedGroups = req.body.sharedToGroup;
     console.log(sharedGroups);
-    if (sharedGroups) {
+    if (sharedGroups && sharedGroups.length > 0) {
       for (const groupId of sharedGroups) {
         await prisma.sharedGoal.create({
           data: { goal_id: newGoal.id, group_id: groupId },
         });
       }
+      
+      // Send notifications for goal sharing
+      await createGoalSharingNotifications(
+        newGoal.id,
+        newGoal.title,
+        sharedGroups,
+        req.user!.username
+      );
     }
 
     if (!newGoal)
@@ -186,7 +236,7 @@ goalRouter.patch(
     const currentGroupIds = currentShared.map((sg) => sg.group_id);
 
     // Determine which groups to connect and disconnect
-    const newGroupIds: string[] = sharedGroups.map((sg: string) => sg);
+    const newGroupIds: string[] = sharedGroups ? sharedGroups.map((sg: string) => sg) : [];
     const groupsToConnect = newGroupIds.filter(
       (id: string) => !currentGroupIds.includes(id)
     );
@@ -205,6 +255,16 @@ goalRouter.patch(
       await prisma.sharedGoal.create({
         data: { goal_id: id, group_id: groupId },
       });
+    }
+
+    // Send notifications for newly shared groups
+    if (groupsToConnect.length > 0) {
+      await createGoalSharingNotifications(
+        id,
+        title || "Goal", // Use title from request or fallback
+        groupsToConnect,
+        req.user!.username
+      );
     }
 
     try {
