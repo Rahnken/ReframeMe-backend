@@ -25,7 +25,7 @@ model User {
   lastLogin      DateTime?
   goals          Goal[]
   profiles       UserProfiles?
-  groups         Group_Users[]  
+  groups         Group_Users[]
 }
 
 model Goal {
@@ -34,19 +34,36 @@ model Goal {
   description String
   user_id     String
   isPrivate   Boolean        @default(true)
+  // SMART Goal fields
+  specific    String?
+  measurable  String?
+  attainable  String?
+  relevant    String?
+  timeBound   String?
+  // Goal Cycle fields
+  startDate   DateTime       @default(now())
+  endDate     DateTime
+  cycleDuration Int          @default(12) // Number of weeks
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   user        User           @relation(fields: [user_id], references: [user_id])
   goalWeeks   GoalProgress[]
   sharedGoals SharedGoal[]
 }
 
 model GoalProgress {
-  id              String  @id @default(cuid())
+  id              String   @id @default(cuid())
   goal_id         String
   feedback        String?
   weekNumber      Int
   targetAmount    Int
-  completedAmount Int?
-  goal            Goal    @relation(fields: [goal_id], references: [id])
+  completedAmount Int      @default(0)
+  // Enhanced progress tracking fields
+  achieved        Boolean  @default(false)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  goal            Goal     @relation(fields: [goal_id], references: [id], onDelete: Cascade)
 
   @@unique([goal_id, weekNumber]) // Each goal can only have one progress entry per week
 }
@@ -78,7 +95,7 @@ model UserProfiles {
 
 model UserSettings {
   userSetting_id  String        @id @default(cuid())
-  theme           String?       @default("reframeDark")
+  theme           String?       @default("modernDark")
   profileComplete Boolean       @default(false)
   userProfile     UserProfiles?
 }

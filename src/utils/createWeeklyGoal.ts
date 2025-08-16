@@ -1,11 +1,11 @@
 export const createWeeklyGoalsArray = (
   trackedAmount: number,
-  weeksRemaining: number = 12 // Default to 12 weeks
+  cycleDuration: number = 12 // Default to 12 weeks
 ) => {
   const array = [];
-  for (let index = 0; index < weeksRemaining; index++) {
+  for (let week = 1; week <= cycleDuration; week++) {
     array.push({
-      weekNumber: index,
+      weekNumber: week,
       completedAmount: 0,
       targetAmount: trackedAmount,
     });
